@@ -62,9 +62,9 @@ export const useBinancePrice = (symbol: string = "BTCUSDT") => {
 };
 
 export const useBinanceTopSymbols = () => {
-  return useQuery({
+  return useQuery<string[]>({
     queryKey: ["binance-top-symbols"],
-    queryFn: async () => {
+    queryFn: async (): Promise<string[]> => {
       const response = await fetch(
         `${BINANCE_API}/ticker/24hr`
       );
@@ -77,7 +77,8 @@ export const useBinanceTopSymbols = () => {
       return data
         .filter((t: any) => t.symbol.endsWith("USDT"))
         .sort((a: any, b: any) => parseFloat(b.quoteVolume) - parseFloat(a.quoteVolume))
-        .slice(0, 50);
+        .slice(0, 50)
+        .map((t: any) => t.symbol);
     },
     staleTime: 300000,
   });
