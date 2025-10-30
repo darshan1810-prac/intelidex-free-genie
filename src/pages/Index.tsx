@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings as SettingsIcon, RefreshCw } from "lucide-react";
+import { Settings as SettingsIcon, RefreshCw, User, TestTube } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useCryptoData, useCryptoChart } from "@/hooks/useCryptoData";
+import { useBinanceKlines } from "@/hooks/useBinanceData";
 import { useSettings } from "@/hooks/useSettings";
 import { CryptoTable } from "@/components/CryptoTable";
 import { PriceChart } from "@/components/PriceChart";
@@ -10,15 +12,32 @@ import { CorrelationMatrix } from "@/components/CorrelationMatrix";
 import { NewsFeed } from "@/components/NewsFeed";
 import { StatsCards } from "@/components/StatsCards";
 import { toast } from "sonner";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const Index = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
   const [selectedCoin, setSelectedCoin] = useState("bitcoin");
   const [priceHistory, setPriceHistory] = useState<Record<string, number[]>>({});
+  const [user, setUser] = useState<SupabaseUser | null>(null);
 
   const { data: cryptoData, isLoading, refetch } = useCryptoData(settings.refreshInterval);
   const { data: chartData } = useCryptoChart(selectedCoin, 7);
+  const { data: binanceData } = useBinanceKlines("BTCUSDT", "1h", 168);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Build price history for correlation
   useEffect(() => {
@@ -64,6 +83,17 @@ const Index = () => {
               >
                 <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
               </Button>
+              {user ? (
+                <Button variant="outline" onClick={() => navigate("/paper-trading")}>
+                  <TestTube className="w-4 h-4 mr-2" />
+                  Paper Trading
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={() => navigate("/auth")}>
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
               <Button variant="outline" onClick={() => navigate("/settings")}>
                 <SettingsIcon className="w-4 h-4 mr-2" />
                 Settings

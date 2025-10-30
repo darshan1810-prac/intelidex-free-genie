@@ -11,8 +11,11 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Activity, BarChart3 } from "lucide-react";
+import { TrendingUp, Activity, BarChart3, Download } from "lucide-react";
 import { calculateEMA, calculateRSI, calculateVWAP } from "@/utils/technicalIndicators";
+import { useBinanceKlines } from "@/hooks/useBinanceData";
+import { exportToCSV } from "@/utils/csvExport";
+import { toast } from "sonner";
 
 interface PriceChartProps {
   data: Array<{ timestamp: number; price: number }>;
@@ -24,6 +27,16 @@ export const PriceChart = ({ data, volumes, coinName }: PriceChartProps) => {
   const [showEMA, setShowEMA] = useState(true);
   const [showRSI, setShowRSI] = useState(false);
   const [showVWAP, setShowVWAP] = useState(false);
+  
+  const symbol = coinName === "Bitcoin" ? "BTCUSDT" : "ETHUSDT";
+  const { data: binanceData } = useBinanceKlines(symbol, "1h", 168);
+
+  const handleExportCSV = () => {
+    if (binanceData) {
+      exportToCSV(binanceData, symbol);
+      toast.success("CSV exported successfully");
+    }
+  };
 
   const prices = data.map((d) => d.price);
   const volumeData = volumes.map((v) => v.volume);
@@ -49,6 +62,14 @@ export const PriceChart = ({ data, volumes, coinName }: PriceChartProps) => {
             {coinName} Price Chart
           </CardTitle>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              CSV
+            </Button>
             <Button
               variant={showEMA ? "default" : "outline"}
               size="sm"
