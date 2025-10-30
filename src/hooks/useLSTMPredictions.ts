@@ -8,6 +8,8 @@ export interface LSTMPrediction {
   probability: number;
   confidence: number;
   close_price: number;
+  upper_bound?: number;
+  lower_bound?: number;
   indicators: {
     rsi: number;
     macd: number;
@@ -30,7 +32,8 @@ export const useLSTMPredictions = () => {
   const generatePredictions = async (
     symbol: string,
     startDate?: string,
-    periods: number = 14
+    periods: number = 14,
+    interval: string = "1h"
   ) => {
     setLoading(true);
     setError(null);
@@ -39,7 +42,7 @@ export const useLSTMPredictions = () => {
       const { data, error: fnError } = await supabase.functions.invoke(
         "lstm-predictions",
         {
-          body: { symbol, startDate, periods },
+          body: { symbol, startDate, periods, interval },
         }
       );
 

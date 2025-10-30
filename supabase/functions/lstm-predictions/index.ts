@@ -9,18 +9,18 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { symbol, startDate, periods = 14 } = await req.json();
+    const { symbol, startDate, periods = 14, interval = "1h" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    // Fetch historical data from Binance
-    const binanceData = await fetchBinanceData(symbol, periods + 100); // Extra data for indicators
+    // Fetch historical data from Binance with specified interval
+    const binanceData = await fetchBinanceData(symbol, periods + 100, interval);
     
     // Calculate all technical indicators
     const indicators = calculateIndicators(binanceData);
     
-    // Generate predictions using AI
-    const predictions = await generatePredictions(indicators, startDate, periods, LOVABLE_API_KEY);
+    // Generate predictions using AI with volatility bounds
+    const predictions = await generatePredictions(indicators, startDate, periods, LOVABLE_API_KEY, interval);
     
     return new Response(JSON.stringify({ success: true, predictions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -35,8 +35,8 @@ serve(async (req) => {
   }
 });
 
-async function fetchBinanceData(symbol: string, limit: number) {
-  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=1h&limit=${limit}`;
+async function fetchBinanceData(symbol: string, limit: number, interval: string = "1h") {
+  const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
   const response = await fetch(url);
   const data = await response.json();
   
@@ -323,7 +323,7 @@ function addOBV(data: any[]) {
   }
 }
 
-async function generatePredictions(data: any[], startDate: string | null, periods: number, apiKey: string) {
+async function generatePredictions(data: any[], startDate: string | null, periods: number, apiKey: string, interval: string = "1h") {
   const startIdx = startDate 
     ? data.findIndex(d => d.date.toISOString().split('T')[0] === startDate)
     : data.length - 21;
@@ -332,6 +332,17 @@ async function generatePredictions(data: any[], startDate: string | null, period
   
   const predictions = [];
   
+  // Calculate ATR for volatility-based bounds
+  const calculateVolatilityMultiplier = (interval: string): number => {
+    const multipliers: Record<string, number> = {
+      "1m": 0.5, "5m": 0.8, "15m": 1.0, "30m": 1.2,
+      "1h": 1.5, "4h": 2.0, "1d": 2.5, "1w": 3.0
+    };
+    return multipliers[interval] || 1.5;
+  };
+  
+  const volatilityMultiplier = calculateVolatilityMultiplier(interval);
+  
   for (let i = 0; i < periods; i++) {
     const predIdx = startIdx + i;
     if (predIdx >= data.length) break;
@@ -339,7 +350,12 @@ async function generatePredictions(data: any[], startDate: string | null, period
     const window = data.slice(predIdx - 21, predIdx);
     const current = data[predIdx];
     
-    // Prepare indicator summary for AI
+    // Calculate upper and lower bounds using ATR and volatility
+    const atr = current.atr || 0;
+    const upperBound = current.close + (atr * volatilityMultiplier);
+    const lowerBound = current.close - (atr * volatilityMultiplier);
+    
+    // Prepare indicator summary for AI with enhanced technical depth
     const summary = {
       rsi: current.rsi,
       macd: current.macd,
@@ -353,7 +369,7 @@ async function generatePredictions(data: any[], startDate: string | null, period
       price: current.close,
     };
     
-    // Use AI to analyze
+    // Enhanced AI prompt with more technical depth
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -365,11 +381,48 @@ async function generatePredictions(data: any[], startDate: string | null, period
         messages: [
           {
             role: "system",
-            content: "You are an expert crypto trading analyst. Analyze technical indicators and provide a BUY or SELL signal with probability. Respond ONLY with JSON: {\"signal\":\"BUY\" or \"SELL\",\"probability\":0.0-1.0,\"confidence\":0.0-1.0}"
+            content: `You are an expert algorithmic trading analyst specializing in technical analysis and quantitative strategies. 
+            
+Analyze the following key concepts:
+1. RSI (Relative Strength Index): Momentum oscillator (0-100). <30 = oversold, >70 = overbought.
+2. MACD: Trend-following momentum. Positive histogram = bullish momentum, negative = bearish.
+3. Bollinger Bands Position: Price position within bands. >0.8 = near upper (potential reversal), <0.2 = near lower.
+4. Stochastic: Momentum oscillator. <20 = oversold zone, >80 = overbought zone.
+5. Volume Ratio: Current volume vs average. >1.5 = high volume (strong signal).
+6. Trend Strength: % deviation from MA. >5% = strong uptrend, <-5% = strong downtrend.
+
+Consider confluence of multiple indicators. High confidence signals require 3+ indicators aligning.
+Respond ONLY with JSON: {"signal":"BUY" or "SELL","probability":0.0-1.0,"confidence":0.0-1.0}
+
+Confidence calculation:
+- High (0.7-1.0): 4+ indicators align + high volume
+- Medium (0.5-0.7): 2-3 indicators align
+- Low (0.0-0.5): Mixed signals or single indicator`
           },
           {
             role: "user",
-            content: `Analyze these indicators for trading decision:\nRSI: ${summary.rsi?.toFixed(2)}\nMACD: ${summary.macd?.toFixed(4)} (Hist: ${summary.macd_hist?.toFixed(4)})\nBB Position: ${summary.bb_position?.toFixed(2)}\nTrend Strength: ${summary.trend_strength?.toFixed(2)}%\nVolume Ratio: ${summary.volume_ratio?.toFixed(2)}\nStochastic: ${summary.stochastic?.toFixed(2)}\nATR%: ${summary.atr_pct?.toFixed(2)}\n7d Return: ${summary.return_7d?.toFixed(2)}%\nPrice: $${summary.price?.toFixed(2)}`
+            content: `Interval: ${interval}
+Technical Analysis:
+
+MOMENTUM INDICATORS:
+- RSI: ${summary.rsi?.toFixed(2)} ${summary.rsi < 30 ? '(OVERSOLD)' : summary.rsi > 70 ? '(OVERBOUGHT)' : '(NEUTRAL)'}
+- Stochastic: ${summary.stochastic?.toFixed(2)} ${summary.stochastic < 20 ? '(OVERSOLD)' : summary.stochastic > 80 ? '(OVERBOUGHT)' : '(NEUTRAL)'}
+- 7-Day Return: ${summary.return_7d?.toFixed(2)}%
+
+TREND INDICATORS:
+- Trend Strength: ${summary.trend_strength?.toFixed(2)}% ${Math.abs(summary.trend_strength) > 5 ? '(STRONG)' : '(WEAK)'}
+- MACD: ${summary.macd?.toFixed(4)}
+- MACD Histogram: ${summary.macd_hist?.toFixed(4)} ${summary.macd_hist > 0 ? '(BULLISH)' : '(BEARISH)'}
+
+VOLATILITY & VOLUME:
+- BB Position: ${summary.bb_position?.toFixed(2)} (0=lower band, 1=upper band)
+- ATR %: ${summary.atr_pct?.toFixed(2)}% (volatility measure)
+- Volume Ratio: ${summary.volume_ratio?.toFixed(2)}x ${summary.volume_ratio > 1.5 ? '(HIGH VOLUME)' : '(NORMAL)'}
+
+Current Price: $${summary.price?.toFixed(2)}
+Volatility Bounds: $${lowerBound.toFixed(2)} - $${upperBound.toFixed(2)}
+
+Provide BUY/SELL signal with probability and confidence.`
           }
         ],
       }),
@@ -392,6 +445,8 @@ async function generatePredictions(data: any[], startDate: string | null, period
       probability: decision.probability || 0.5,
       confidence: decision.confidence || 0.5,
       close_price: current.close,
+      upper_bound: upperBound,
+      lower_bound: lowerBound,
       indicators: summary,
     });
   }
