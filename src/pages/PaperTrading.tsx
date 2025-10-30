@@ -182,9 +182,9 @@ const PaperTrading = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {symbols?.slice(0, 20).map((s: any) => (
-                      <SelectItem key={s.symbol} value={s.symbol}>
-                        {s.symbol.replace("USDT", "/USDT")}
+                    {symbols?.slice(0, 20).map((symbol: string) => (
+                      <SelectItem key={symbol} value={symbol}>
+                        {symbol.replace("USDT", "/USDT")}
                       </SelectItem>
                     ))}
                   </SelectContent>
