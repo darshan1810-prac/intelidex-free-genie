@@ -84,10 +84,15 @@ const Index = () => {
                 <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
               </Button>
               {user ? (
-                <Button variant="outline" onClick={() => navigate("/paper-trading")}>
-                  <TestTube className="w-4 h-4 mr-2" />
-                  Paper Trading
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => navigate("/paper-trading")}>
+                    <TestTube className="w-4 h-4 mr-2" />
+                    Paper Trading
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/trading-bot")}>
+                    LSTM Bot
+                  </Button>
+                </>
               ) : (
                 <Button variant="outline" onClick={() => navigate("/auth")}>
                   <User className="w-4 h-4 mr-2" />

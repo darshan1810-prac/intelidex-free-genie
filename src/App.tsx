@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import PaperTrading from "./pages/PaperTrading";
+import TradingBot from "./pages/TradingBot";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/paper-trading" element={<PaperTrading />} />
+          <Route path="/trading-bot" element={<TradingBot />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

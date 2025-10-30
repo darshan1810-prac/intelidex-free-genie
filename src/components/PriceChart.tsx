@@ -11,7 +11,10 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Activity, BarChart3, Download } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { TrendingUp, Activity, BarChart3, Download, Calendar } from "lucide-react";
 import { calculateEMA, calculateRSI, calculateVWAP } from "@/utils/technicalIndicators";
 import { useBinanceKlines } from "@/hooks/useBinanceData";
 import { exportToCSV } from "@/utils/csvExport";
@@ -27,13 +30,15 @@ export const PriceChart = ({ data, volumes, coinName }: PriceChartProps) => {
   const [showEMA, setShowEMA] = useState(true);
   const [showRSI, setShowRSI] = useState(false);
   const [showVWAP, setShowVWAP] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   
   const symbol = coinName === "Bitcoin" ? "BTCUSDT" : "ETHUSDT";
   const { data: binanceData } = useBinanceKlines(symbol, "1h", 168);
 
   const handleExportCSV = () => {
     if (binanceData) {
-      exportToCSV(binanceData, symbol);
+      exportToCSV(binanceData, symbol, startDate, endDate);
       toast.success("CSV exported successfully");
     }
   };
@@ -62,6 +67,36 @@ export const PriceChart = ({ data, volumes, coinName }: PriceChartProps) => {
             {coinName} Price Chart
           </CardTitle>
           <div className="flex gap-2">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Date Range
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="start-date">Start Date</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="end-date">End Date</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             <Button
               variant="outline"
               size="sm"
