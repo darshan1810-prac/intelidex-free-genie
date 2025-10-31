@@ -1,1 +1,16 @@
 project_id = "gwflokysktgvynnixkzv"
+
+[functions.crypto-sentiment]
+verify_jwt = false
+
+[functions.lstm-predictions]
+verify_jwt = false
+
+[functions.fetch-news]
+verify_jwt = false
+
+[functions.analyze-sentiment]
+verify_jwt = false
+
+[functions.generate-signals]
+verify_jwt = false
