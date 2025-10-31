@@ -86,3 +86,142 @@ export const calculateCorrelation = (data1: number[], data2: number[]): number =
   const denominator = Math.sqrt(sum1 * sum2);
   return denominator === 0 ? 0 : numerator / denominator;
 };
+
+export interface MACDResult {
+  macd: number[];
+  signal: number[];
+  histogram: number[];
+}
+
+export const calculateMACD = (
+  data: number[],
+  fastPeriod: number = 12,
+  slowPeriod: number = 26,
+  signalPeriod: number = 9
+): MACDResult => {
+  const fastEMA = calculateEMA(data, fastPeriod);
+  const slowEMA = calculateEMA(data, slowPeriod);
+  
+  const macdLine: number[] = [];
+  const minLength = Math.min(fastEMA.length, slowEMA.length);
+  
+  for (let i = 0; i < minLength; i++) {
+    macdLine.push(fastEMA[fastEMA.length - minLength + i] - slowEMA[slowEMA.length - minLength + i]);
+  }
+  
+  const signalLine = calculateEMA(macdLine, signalPeriod);
+  const histogram: number[] = [];
+  
+  for (let i = 0; i < signalLine.length; i++) {
+    histogram.push(macdLine[macdLine.length - signalLine.length + i] - signalLine[i]);
+  }
+  
+  return { macd: macdLine, signal: signalLine, histogram };
+};
+
+export interface BollingerBandsResult {
+  upper: number[];
+  middle: number[];
+  lower: number[];
+}
+
+export const calculateBollingerBands = (
+  data: number[],
+  period: number = 20,
+  stdDev: number = 2
+): BollingerBandsResult => {
+  if (data.length < period) return { upper: [], middle: [], lower: [] };
+  
+  const middle: number[] = [];
+  const upper: number[] = [];
+  const lower: number[] = [];
+  
+  for (let i = period - 1; i < data.length; i++) {
+    const slice = data.slice(i - period + 1, i + 1);
+    const sma = slice.reduce((a, b) => a + b) / period;
+    middle.push(sma);
+    
+    const variance = slice.reduce((sum, val) => sum + Math.pow(val - sma, 2), 0) / period;
+    const std = Math.sqrt(variance);
+    
+    upper.push(sma + stdDev * std);
+    lower.push(sma - stdDev * std);
+  }
+  
+  return { upper, middle, lower };
+};
+
+export interface StochasticResult {
+  k: number[];
+  d: number[];
+}
+
+export const calculateStochastic = (
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  kPeriod: number = 14,
+  dPeriod: number = 3
+): StochasticResult => {
+  if (highs.length < kPeriod || highs.length !== lows.length || highs.length !== closes.length) {
+    return { k: [], d: [] };
+  }
+  
+  const k: number[] = [];
+  
+  for (let i = kPeriod - 1; i < closes.length; i++) {
+    const periodHighs = highs.slice(i - kPeriod + 1, i + 1);
+    const periodLows = lows.slice(i - kPeriod + 1, i + 1);
+    
+    const highestHigh = Math.max(...periodHighs);
+    const lowestLow = Math.min(...periodLows);
+    
+    const kValue = ((closes[i] - lowestLow) / (highestHigh - lowestLow)) * 100;
+    k.push(kValue);
+  }
+  
+  const d: number[] = [];
+  for (let i = dPeriod - 1; i < k.length; i++) {
+    const sum = k.slice(i - dPeriod + 1, i + 1).reduce((a, b) => a + b);
+    d.push(sum / dPeriod);
+  }
+  
+  return { k, d };
+};
+
+export const calculateATR = (
+  highs: number[],
+  lows: number[],
+  closes: number[],
+  period: number = 14
+): number[] => {
+  if (highs.length < 2 || highs.length !== lows.length || highs.length !== closes.length) {
+    return [];
+  }
+  
+  const tr: number[] = [];
+  
+  for (let i = 1; i < closes.length; i++) {
+    const high = highs[i];
+    const low = lows[i];
+    const prevClose = closes[i - 1];
+    
+    const trueRange = Math.max(
+      high - low,
+      Math.abs(high - prevClose),
+      Math.abs(low - prevClose)
+    );
+    tr.push(trueRange);
+  }
+  
+  const atr: number[] = [];
+  let sum = tr.slice(0, period).reduce((a, b) => a + b);
+  atr.push(sum / period);
+  
+  for (let i = period; i < tr.length; i++) {
+    const value = (atr[atr.length - 1] * (period - 1) + tr[i]) / period;
+    atr.push(value);
+  }
+  
+  return atr;
+};
