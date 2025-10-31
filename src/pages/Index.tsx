@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Settings as SettingsIcon, RefreshCw, User, TestTube, TrendingUp } from "lucide-react";
+import { Settings as SettingsIcon, RefreshCw, User, TestTube, TrendingUp, Newspaper } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useBinanceKlines, useBinanceTopSymbols } from "@/hooks/useBinanceData";
@@ -141,12 +141,22 @@ const Index = () => {
                     <TrendingUp className="w-4 h-4 mr-2" />
                     LSTM Bot
                   </Button>
+                  <Button variant="outline" onClick={() => navigate("/news-analysis")}>
+                    <Newspaper className="w-4 h-4 mr-2" />
+                    News Analysis
+                  </Button>
                 </>
               ) : (
-                <Button variant="outline" onClick={() => navigate("/auth")}>
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
+                <>
+                  <Button variant="outline" onClick={() => navigate("/news-analysis")}>
+                    <Newspaper className="w-4 h-4 mr-2" />
+                    News Analysis
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/auth")}>
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                </>
               )}
               <Button variant="outline" onClick={() => navigate("/settings")}>
                 <SettingsIcon className="w-4 h-4 mr-2" />

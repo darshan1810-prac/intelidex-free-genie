@@ -38,7 +38,7 @@ export const useTradingSignals = (activeOnly = true, symbolFilter?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as TradingSignal[];
+      return (data as unknown) as TradingSignal[];
     },
     refetchInterval: 30000, // Refetch every 30 seconds
   });

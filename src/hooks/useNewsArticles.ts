@@ -34,7 +34,7 @@ export const useNewsArticles = (limit = 50, symbolFilter?: string) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as NewsArticle[];
+      return (data as unknown) as NewsArticle[];
     },
     refetchInterval: 60000, // Refetch every minute
   });

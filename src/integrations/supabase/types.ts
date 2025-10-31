@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      news_articles: {
+        Row: {
+          analyzed_at: string | null
+          content: string
+          created_at: string
+          id: string
+          is_analyzed: boolean
+          published_at: string
+          sentiment: string | null
+          sentiment_score: number | null
+          source: string
+          symbols: string[]
+          title: string
+          url: string
+        }
+        Insert: {
+          analyzed_at?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_analyzed?: boolean
+          published_at: string
+          sentiment?: string | null
+          sentiment_score?: number | null
+          source: string
+          symbols?: string[]
+          title: string
+          url: string
+        }
+        Update: {
+          analyzed_at?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_analyzed?: boolean
+          published_at?: string
+          sentiment?: string | null
+          sentiment_score?: number | null
+          source?: string
+          symbols?: string[]
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
       paper_trades: {
         Row: {
           amount: number
@@ -104,6 +149,54 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      trading_signals: {
+        Row: {
+          article_count: number
+          confidence: number
+          created_at: string
+          expires_at: string
+          id: string
+          is_active: boolean
+          reasoning: string
+          sentiment_score: number
+          signal_type: string
+          source: string
+          stop_loss_pct: number
+          symbol: string
+          target_price_pct: number
+        }
+        Insert: {
+          article_count?: number
+          confidence: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          is_active?: boolean
+          reasoning: string
+          sentiment_score: number
+          signal_type: string
+          source?: string
+          stop_loss_pct: number
+          symbol: string
+          target_price_pct: number
+        }
+        Update: {
+          article_count?: number
+          confidence?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          reasoning?: string
+          sentiment_score?: number
+          signal_type?: string
+          source?: string
+          stop_loss_pct?: number
+          symbol?: string
+          target_price_pct?: number
         }
         Relationships: []
       }
