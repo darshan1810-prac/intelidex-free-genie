@@ -55,6 +55,18 @@ export const useLSTMTrades = (userId?: string) => {
     currentPrice: number
   ) => {
     try {
+      // Validate trade signal
+      const tradeType = prediction.signal === "BUY" ? "BUY" : "SELL";
+      
+      if (!prediction.signal || (prediction.signal !== "BUY" && prediction.signal !== "SELL")) {
+        toast({
+          title: "Invalid Signal",
+          description: "Trade signal must be BUY or SELL",
+          variant: "destructive",
+        });
+        return false;
+      }
+
       // Check wallet balance
       const { data: walletData, error: walletError } = await supabase
         .from("virtual_wallets")
@@ -93,7 +105,7 @@ export const useLSTMTrades = (userId?: string) => {
         .insert({
           user_id: userId,
           symbol,
-          trade_type: prediction.signal,
+          trade_type: tradeType,
           amount: amount as any,
           entry_price: currentPrice as any,
           quantity: quantity as any,
