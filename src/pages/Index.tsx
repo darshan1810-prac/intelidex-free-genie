@@ -28,6 +28,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Brush,
+  Area,
+  ComposedChart,
 } from "recharts";
 import { format } from "date-fns";
 
@@ -268,53 +271,107 @@ const Index = () => {
           {binanceData && chartData && (
             <Card>
               <CardHeader>
-                <CardTitle>Price Chart - {selectedSymbol}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  Technical Price Chart - {selectedSymbol}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Drag the brush below to zoom into specific time ranges
+                </p>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <ResponsiveContainer width="100%" height={500}>
+                  <ComposedChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorVolume" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid 
+                      strokeDasharray="3 3" 
+                      stroke="hsl(var(--border))" 
+                      opacity={0.3}
+                      vertical={false}
+                    />
                     <XAxis
                       dataKey="timestamp"
                       stroke="hsl(var(--muted-foreground))"
-                      tick={{ fontSize: 12 }}
+                      tick={{ fontSize: 11 }}
                       interval="preserveStartEnd"
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
                     />
                     <YAxis
                       stroke="hsl(var(--muted-foreground))"
                       yAxisId="price"
-                      orientation="left"
+                      orientation="right"
+                      tick={{ fontSize: 11 }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                      domain={['auto', 'auto']}
+                      label={{ 
+                        value: 'Price (USDT)', 
+                        angle: -90, 
+                        position: 'insideRight',
+                        style: { fill: 'hsl(var(--muted-foreground))' }
+                      }}
                     />
                     <YAxis
                       stroke="hsl(var(--muted-foreground))"
                       yAxisId="volume"
-                      orientation="right"
+                      orientation="left"
+                      tick={{ fontSize: 11 }}
+                      tickLine={{ stroke: 'hsl(var(--border))' }}
+                      label={{ 
+                        value: 'Volume', 
+                        angle: -90, 
+                        position: 'insideLeft',
+                        style: { fill: 'hsl(var(--muted-foreground))' }
+                      }}
                     />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       }}
+                      labelStyle={{ color: "hsl(var(--foreground))", fontWeight: 600 }}
                     />
-                    <Legend />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px' }}
+                      iconType="line"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="volume"
+                      fill="url(#colorVolume)"
+                      stroke="hsl(var(--chart-1))"
+                      strokeWidth={0}
+                      yAxisId="volume"
+                      name="Volume"
+                    />
                     <Line
                       type="monotone"
                       dataKey="price"
                       stroke="hsl(var(--primary))"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
                       dot={false}
                       yAxisId="price"
+                      name="Price"
+                      activeDot={{ r: 6, fill: "hsl(var(--primary))" }}
                     />
-                    <Line
-                      type="monotone"
-                      dataKey="volume"
-                      stroke="hsl(var(--chart-1))"
-                      strokeWidth={1}
-                      dot={false}
-                      yAxisId="volume"
-                      opacity={0.3}
+                    <Brush 
+                      dataKey="timestamp" 
+                      height={40} 
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--muted))"
+                      travellerWidth={10}
                     />
-                  </LineChart>
+                  </ComposedChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>

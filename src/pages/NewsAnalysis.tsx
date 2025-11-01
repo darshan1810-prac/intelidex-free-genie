@@ -9,6 +9,7 @@ import { useNewsArticles, useTriggerNewsFetch } from "@/hooks/useNewsArticles";
 import { useTradingSignals } from "@/hooks/useTradingSignals";
 import { NewsArticleCard } from "@/components/NewsArticleCard";
 import { TradingSignalCard } from "@/components/TradingSignalCard";
+import { TradingRecommendations } from "@/components/TradingRecommendations";
 import { toast } from "sonner";
 
 const CRYPTO_SYMBOLS = [
@@ -164,6 +165,13 @@ const NewsAnalysis = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto">
+        {/* AI Recommendations */}
+        {activeSignals.length > 0 && (
+          <div className="mb-6">
+            <TradingRecommendations signals={activeSignals} />
+          </div>
+        )}
+
         <Tabs defaultValue="signals" className="space-y-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="signals" className="gap-2">
