@@ -6,11 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, TrendingUp, TrendingDown, Download, Activity } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown, Download, Activity, Wallet, DollarSign } from "lucide-react";
 import { useLSTMPredictions, type LSTMPrediction } from "@/hooks/useLSTMPredictions";
-import { useBinanceTopSymbols } from "@/hooks/useBinanceData";
+import { useLSTMTrades } from "@/hooks/useLSTMTrades";
+import { useWallet } from "@/hooks/useWallet";
+import { useBinanceTopSymbols, useBinancePrice } from "@/hooks/useBinanceData";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ExecuteTradeDialog } from "@/components/ExecuteTradeDialog";
 
 const TradingBot = () => {
   const navigate = useNavigate();
@@ -22,9 +25,16 @@ const TradingBot = () => {
   const [useLatest, setUseLatest] = useState(true);
   const [interval, setInterval] = useState("1h");
   const [timeFrame, setTimeFrame] = useState("1w");
+  const [selectedPrediction, setSelectedPrediction] = useState<LSTMPrediction | null>(null);
+  const [showExecuteDialog, setShowExecuteDialog] = useState(false);
   
   const { data: topSymbols } = useBinanceTopSymbols();
+  const { data: priceData } = useBinancePrice(symbol);
   const { predictions, loading, error, generatePredictions } = useLSTMPredictions();
+  const { wallet, refetch: refetchWallet } = useWallet(user?.id);
+  const { executeTrade, trades } = useLSTMTrades(user?.id);
+
+  const currentPrice = priceData ? parseFloat(priceData.lastPrice) : 0;
 
   const intervals = [
     { value: "1m", label: "1 min" },
@@ -161,6 +171,29 @@ const TradingBot = () => {
     return "text-red-500";
   };
 
+  const handleExecuteTrade = async (amount: number) => {
+    if (!user || !selectedPrediction) return false;
+    
+    const success = await executeTrade(
+      user.id,
+      symbol,
+      selectedPrediction,
+      amount,
+      currentPrice
+    );
+
+    if (success) {
+      refetchWallet();
+    }
+
+    return success;
+  };
+
+  const openExecuteDialog = (prediction: LSTMPrediction) => {
+    setSelectedPrediction(prediction);
+    setShowExecuteDialog(true);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -169,9 +202,21 @@ const TradingBot = () => {
             <h1 className="text-3xl font-bold">LSTM Trading Bot</h1>
             <p className="text-muted-foreground">AI-powered spot trading predictions</p>
           </div>
-          <Button onClick={() => navigate("/paper-trading")} variant="outline">
-            Paper Trading
-          </Button>
+          <div className="flex items-center gap-3">
+            {wallet && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg">
+                <Wallet className="w-5 h-5 text-primary" />
+                <span className="font-mono text-lg text-foreground">${wallet.balance.toFixed(2)}</span>
+              </div>
+            )}
+            <Button onClick={() => navigate("/paper-trading")} variant="outline">
+              Paper Trading
+            </Button>
+            <Button onClick={() => navigate("/profile")} variant="outline">
+              <DollarSign className="w-4 h-4 mr-2" />
+              Profile
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -320,6 +365,7 @@ const TradingBot = () => {
                       <th className="text-right p-2">Upper Bound</th>
                       <th className="text-right p-2">Lower Bound</th>
                       <th className="text-right p-2">Risk/Reward</th>
+                      <th className="text-center p-2">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -368,6 +414,17 @@ const TradingBot = () => {
                           </td>
                           <td className="p-2 text-right font-mono font-semibold">
                             {riskReward}
+                          </td>
+                          <td className="p-2 text-center">
+                            {useLatest && idx === predictions.length - 1 && (
+                              <Button
+                                size="sm"
+                                onClick={() => openExecuteDialog(pred)}
+                                className="bg-primary hover:bg-primary/90"
+                              >
+                                Execute
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       );
@@ -460,6 +517,16 @@ const TradingBot = () => {
           </>
         )}
       </div>
+
+      <ExecuteTradeDialog
+        open={showExecuteDialog}
+        onOpenChange={setShowExecuteDialog}
+        prediction={selectedPrediction}
+        symbol={symbol}
+        currentPrice={currentPrice}
+        walletBalance={wallet?.balance || 0}
+        onExecute={handleExecuteTrade}
+      />
     </div>
   );
 };

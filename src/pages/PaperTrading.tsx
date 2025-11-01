@@ -162,6 +162,7 @@ const PaperTrading = () => {
                 <Wallet className="w-5 h-5 text-primary" />
                 <span className="font-mono text-lg text-foreground">${balance.toFixed(2)}</span>
               </div>
+              <Button variant="outline" onClick={() => navigate("/profile")}>Profile</Button>
               <Button variant="outline" onClick={handleSignOut}>Sign Out</Button>
             </div>
           </div>

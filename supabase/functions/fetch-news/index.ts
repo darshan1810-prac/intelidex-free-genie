@@ -114,6 +114,30 @@ serve(async (req) => {
           symbols: ['MATIC'],
           source: 'polygon-tech.com',
         },
+        {
+          title: 'Avalanche Sees Record Network Activity',
+          content: 'Avalanche blockchain reports all-time high in daily active users and transaction volume.',
+          symbols: ['AVAX'],
+          source: 'avalanche-today.com',
+        },
+        {
+          title: 'Polkadot Parachain Auction Attracts Major Projects',
+          content: 'Latest Polkadot parachain auction sees competitive bidding from leading blockchain projects.',
+          symbols: ['DOT'],
+          source: 'polkadot-news.com',
+        },
+        {
+          title: 'Major Exchange Lists Multiple Altcoins',
+          content: 'Leading cryptocurrency exchange announces support for additional altcoins, boosting trading volume.',
+          symbols: ['BTC', 'ETH', 'BNB'],
+          source: 'exchange-wire.com',
+        },
+        {
+          title: 'DeFi Protocol Reports $1B in TVL Milestone',
+          content: 'Popular DeFi protocol crosses $1 billion in total value locked, marking significant growth.',
+          symbols: ['ETH', 'BNB', 'MATIC'],
+          source: 'defi-daily.com',
+        },
       ];
 
       for (const mock of mockNews) {
@@ -121,7 +145,7 @@ serve(async (req) => {
           title: mock.title,
           content: mock.content,
           source: mock.source,
-          url: `https://${mock.source}/article/${Date.now()}`,
+          url: `https://${mock.source}/article/${Date.now()}-${Math.random()}`,
           published_at: new Date(Date.now() - Math.random() * 3600000).toISOString(),
           symbols: mock.symbols,
           sentiment: null,
