@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      lstm_trades: {
+        Row: {
+          amount: number
+          closed_at: string | null
+          created_at: string
+          entry_price: number
+          executed_at: string
+          exit_price: number | null
+          id: string
+          prediction_data: Json | null
+          profit_loss: number | null
+          quantity: number
+          status: string
+          symbol: string
+          trade_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          closed_at?: string | null
+          created_at?: string
+          entry_price: number
+          executed_at?: string
+          exit_price?: number | null
+          id?: string
+          prediction_data?: Json | null
+          profit_loss?: number | null
+          quantity: number
+          status?: string
+          symbol: string
+          trade_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          closed_at?: string | null
+          created_at?: string
+          entry_price?: number
+          executed_at?: string
+          exit_price?: number | null
+          id?: string
+          prediction_data?: Json | null
+          profit_loss?: number | null
+          quantity?: number
+          status?: string
+          symbol?: string
+          trade_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           analyzed_at: string | null
@@ -100,6 +151,10 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          lstm_trading_invested: number | null
+          lstm_trading_profit: number | null
+          paper_trading_invested: number | null
+          paper_trading_profit: number | null
           updated_at: string
           user_id: string
         }
@@ -107,6 +162,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          lstm_trading_invested?: number | null
+          lstm_trading_profit?: number | null
+          paper_trading_invested?: number | null
+          paper_trading_profit?: number | null
           updated_at?: string
           user_id: string
         }
@@ -114,6 +173,10 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          lstm_trading_invested?: number | null
+          lstm_trading_profit?: number | null
+          paper_trading_invested?: number | null
+          paper_trading_profit?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -220,6 +283,39 @@ export type Database = {
           created_at?: string
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          related_trade_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          related_trade_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          related_trade_id?: string | null
+          transaction_type?: string
           user_id?: string
         }
         Relationships: []
